@@ -14,10 +14,9 @@ using namespace std;
 class BigReal {
 private:
     string realNumber;
-    BigDecimalInt RealBigWhole, RealBigDecimal;
+    BigDecimalInt RealBigWhole;
     double realDouble;
-    int PointPos;
-    BigDecimalInt BigInt;
+    int PointPos = 0;
     int signReal;
 public:
     BigReal (double realNumber = 0.0); // Default constructor
