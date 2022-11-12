@@ -165,7 +165,7 @@ BigReal &BigReal::operator=(BigReal &&other) {
 }
 
 
-BigReal BigReal::operator+(BigReal &other) {
+BigReal BigReal::operator+(BigReal other) {
 
     BigDecimalInt tmp, sumD;
     string s;
@@ -236,7 +236,7 @@ BigReal::BigReal(BigReal &&other) {
 }
 
 
-BigReal BigReal::operator-(BigReal &other) {
+BigReal BigReal::operator-(BigReal other) {
 
     // same as the + operator nothing different
 
