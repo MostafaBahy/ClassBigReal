@@ -1,5 +1,7 @@
 #include "BigReal.h"
 
+//Function to keep the decimal without rounding
+//The compiler rounds the number ex: 60.9999999777
 
 string convertToString(double value) {
     stringstream ss;
@@ -9,7 +11,7 @@ string convertToString(double value) {
 
 
 BigReal::BigReal(double realNumber) {
-    this->realNumber = convertToString(realNumber);
+    this->realNumber = convertToString(realNumber);     // call convertToString
     for (int i = 0; i < this->realNumber.size(); ++i) {
         if (this->realNumber[i] == '.') {
             PointPos = i;
@@ -68,67 +70,42 @@ BigReal::BigReal(const BigReal &other) {
 
 
 bool BigReal::operator==(BigReal anotherReal) {
-    BigDecimalInt tmp;
-    string s;
-    if (this->RealBigWhole.size() > anotherReal.RealBigWhole.size() &&
-        (this->PointPos == this->RealBigWhole.size() || anotherReal.PointPos == anotherReal.RealBigWhole.size())) {
-        int diff = this->RealBigWhole.size() - anotherReal.RealBigWhole.size();
-        s = anotherReal.realNumber;
-        s.erase(anotherReal.PointPos, 1);
-        s.insert(s.length(), diff, '0');
-        tmp.setNumber(s);
-        return (this->RealBigWhole == tmp && this->PointPos == anotherReal.PointPos);
-    } else if (this->RealBigWhole.size() < anotherReal.size() &&
-               (this->PointPos == this->RealBigWhole.size() ||
-                anotherReal.PointPos == anotherReal.RealBigWhole.size())) {
-        int diff = anotherReal.RealBigWhole.size() - this->RealBigWhole.size();
-        s = this->realNumber;
-        s.erase(this->PointPos, 1);
-        s.insert(s.length(), diff, '0');
-        tmp.setNumber(s);
-        return (tmp == anotherReal.RealBigWhole && this->PointPos == anotherReal.PointPos);
-    }
-    return (this->RealBigWhole == anotherReal.RealBigWhole && this->PointPos == anotherReal.PointPos);
+    if (this->signReal == anotherReal.signReal && this->realNumber == anotherReal.realNumber)
+        return true;
+    return false;
 }
 
 
 bool BigReal::operator>(BigReal anotherReal) {
-    BigDecimalInt tmp;
-    string s;
-    if (this->RealBigWhole.size() > anotherReal.RealBigWhole.size() &&
-        (this->PointPos == this->RealBigWhole.size() || anotherReal.PointPos == anotherReal.RealBigWhole.size())) {
-        int diff = this->RealBigWhole.size() - anotherReal.RealBigWhole.size();
-        s = anotherReal.realNumber;
-        s.erase(anotherReal.PointPos, 1);
-        s.insert(s.length(), diff, '0');
-        tmp.setNumber(s);
-        if (this->sign() == 0 && anotherReal.sign() == 0)
-            return ((this->RealBigWhole > tmp || this->RealBigWhole == tmp) &&
-                    this->PointPos < anotherReal.PointPos);
-        else if (this->sign() && anotherReal.sign())
-            return ((this->RealBigWhole > tmp || this->RealBigWhole == tmp) &&
-                    this->PointPos > anotherReal.PointPos);
-    } else if (this->RealBigWhole.size() < anotherReal.size() &&
-               (this->PointPos == this->RealBigWhole.size() ||
-                anotherReal.PointPos == anotherReal.RealBigWhole.size())) {
-        int diff = anotherReal.RealBigWhole.size() - this->RealBigWhole.size();
-        s = this->realNumber;
-        s.erase(this->PointPos, 1);
-        s.insert(s.length(), diff, '0');
-        tmp.setNumber(s);
-        if (this->sign() == 0 && anotherReal.sign() == 0)
-            return ((tmp > anotherReal.RealBigWhole || tmp == anotherReal.RealBigWhole) &&
-                    this->PointPos < anotherReal.PointPos);
-        else if (this->sign() && anotherReal.sign())
-            return ((tmp > anotherReal.RealBigWhole || tmp == anotherReal.RealBigWhole) &&
-                    this->PointPos > anotherReal.PointPos);
+
+    // compare signs first
+
+    if (this->signReal == '+' && anotherReal.signReal == '-')
+        return true;
+    else if (this->signReal == '-' && anotherReal.signReal == '+')
+        return false;
+    else if (this->signReal == '+' && anotherReal.signReal == '+') {
+
+        //As they are both positive the farther the point the greater the number   12.1 > 2.1
+        if (this->PointPos > anotherReal.PointPos)
+            return true;
+
+        else if (this->PointPos == anotherReal.PointPos)          // Compare two strings
+            return this->realNumber > anotherReal.realNumber;
+        else
+            return false;
+    } else {
+
+        //Both are negative so invert the positive
+        //Number with nearer point is larger -1.2 > 12.2
+        if (this->PointPos < anotherReal.PointPos)
+            return true;
+
+        else if (this->PointPos == anotherReal.PointPos)         // Compare two strings
+            return this->realNumber < anotherReal.realNumber;
+        else
+            return false;
     }
-    if (this->sign() == 0 && anotherReal.sign() == 0)
-        return ((this->RealBigWhole > anotherReal.RealBigWhole || this->RealBigWhole == anotherReal.RealBigWhole) &&
-                this->PointPos < anotherReal.PointPos);
-    else if (this->sign() && anotherReal.sign())
-        return ((this->RealBigWhole > anotherReal.RealBigWhole || this->RealBigWhole == anotherReal.RealBigWhole) &&
-                this->PointPos > anotherReal.PointPos);
 }
 
 
@@ -193,6 +170,7 @@ BigReal BigReal::operator+(BigReal &other) {
     BigDecimalInt tmp, sumD;
     string s;
 
+    // Handle zeros make both have same length after the decimal point
     if (this->RealBigWhole.size() - this->PointPos > other.RealBigWhole.size() - other.PointPos) {
         int diff = (this->RealBigWhole.size() - this->PointPos) - (other.RealBigWhole.size() - other.PointPos);
         s = other.realNumber;
@@ -207,14 +185,12 @@ BigReal BigReal::operator+(BigReal &other) {
         s.insert(s.length(), diff, '0');
         tmp.setNumber(s);
         sumD = tmp + other.RealBigWhole;
+
     } else {
         sumD = this->RealBigWhole + other.RealBigWhole;
     }
 
-
-// NOT FINISHED case if the numbers are 1.9, -1.3
-
-
+    //Handle if the returned sum should have a leading zero ex: 1.9 + -1.3 = (0.)6
     if (this->RealBigWhole.getNumber()[0] == '0' && other.RealBigWhole.getNumber()[0] == '0' && sumD.size() == 1) {
         sumD.setNumber(sumD.getNumber().insert(0, 1, '0'));
         BigReal sum(sumD.getNumber().insert(1, 1, '.'));
@@ -227,11 +203,18 @@ BigReal BigReal::operator+(BigReal &other) {
         sum.signReal = sumD.getSign();
         return sum;
     }
+
+    //Handle if the returned sum is different in length
+    //if sum.size is larger move the point to the right          ps. maximum carry size is 1
     int pos = max(other.PointPos, this->PointPos);
-    if (sumD.size() > max(tmp.size() ? tmp.size() : other.size(), max(other.size(), this->size())))
+    if (sumD.size() > max(tmp.size(), max(other.size(), this->size())))
         pos++;
-    else if (sumD.size() < max(tmp.size() ? tmp.size() : other.size(), max(other.size(), this->size())))
-        pos--;
+
+    //if  sum is less shift the point left difference times
+    else if (sumD.size() < max(tmp.size(), max(other.size(), this->size())))
+        pos -= max(tmp.size(), max(other.size(), this->size())) - sumD.size();
+
+    //ex: 1.9 + -1.3 = (0.)6
     if (pos == 0) {
         sumD.setNumber(sumD.getNumber().insert(0, 1, '0'));
         BigReal sum(sumD.getNumber().insert(1, 1, '.'));
@@ -252,8 +235,59 @@ BigReal::BigReal(BigReal &&other) {
     PointPos = other.PointPos;
 }
 
+
 BigReal BigReal::operator-(BigReal &other) {
 
+    // same as the + operator nothing different
+
+    BigDecimalInt tmp, sumD;
+    string s;
+
+    if (this->RealBigWhole.size() - this->PointPos > other.RealBigWhole.size() - other.PointPos) {
+        int diff = (this->RealBigWhole.size() - this->PointPos) - (other.RealBigWhole.size() - other.PointPos);
+        s = other.realNumber;
+        s.erase(other.PointPos, 1);
+        s.insert(s.length(), diff, '0');
+        tmp.setNumber(s);
+        sumD = this->RealBigWhole - tmp;
+    } else if (this->RealBigWhole.size() - this->PointPos < other.RealBigWhole.size() - other.PointPos) {
+        int diff = (other.RealBigWhole.size() - other.PointPos) - (this->RealBigWhole.size() - this->PointPos);
+        s = this->realNumber;
+        s.erase(this->PointPos, 1);
+        s.insert(s.length(), diff, '0');
+        tmp.setNumber(s);
+        sumD = tmp - other.RealBigWhole;
+    } else {
+        sumD = this->RealBigWhole - other.RealBigWhole;
+    }
+
+    if (this->RealBigWhole.getNumber()[0] == '0' && other.RealBigWhole.getNumber()[0] == '0' && sumD.size() == 1) {
+        sumD.setNumber(sumD.getNumber().insert(0, 1, '0'));
+        BigReal sum(sumD.getNumber().insert(1, 1, '.'));
+        sum.signReal = sumD.getSign();
+        return sum;
+    }
+    if (this->RealBigWhole.getNumber()[0] == '0' && other.RealBigWhole.getNumber()[0] == '0' &&
+        sumD.size() != 1) {
+        BigReal sum(sumD.getNumber().insert(1, 1, '.'));
+        sum.signReal = sumD.getSign();
+        return sum;
+    }
+    int pos = max(other.PointPos, this->PointPos);
+    if (sumD.size() > max(tmp.size(), max(other.size(), this->size())))
+        pos++;
+    else if (sumD.size() < max(tmp.size(), max(other.size(), this->size())))
+        pos -= max(tmp.size(), max(other.size(), this->size())) - sumD.size();
+    if (pos == 0) {
+        sumD.setNumber(sumD.getNumber().insert(0, 1, '0'));
+        BigReal sum(sumD.getNumber().insert(1, 1, '.'));
+        sum.signReal = sumD.getSign();
+        return sum;
+    } else {
+        BigReal sum(sumD.getNumber().insert(pos, 1, '.'));
+        sum.signReal = sumD.getSign();
+        return sum;
+    }
 }
 
 
