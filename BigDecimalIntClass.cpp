@@ -353,3 +353,7 @@ ostream &operator << (ostream &out, BigDecimalInt num)
     }
     return out;
 }
+
+char BigDecimalInt::getSign() {
+    return signNumber;
+}
